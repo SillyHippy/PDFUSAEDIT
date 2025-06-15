@@ -26,7 +26,7 @@ export default function LoginPage() {
     e.preventDefault();
     
     // Check password
-    if (password === "Crazy8809!") {
+    if (password === "Password") {
       // Set authentication in localStorage
       localStorage.setItem("serve-tracker-auth", "authenticated");
       setIsAuthenticated(true);
