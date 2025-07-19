@@ -48,6 +48,8 @@ export default function ClientCases({ client, onUpdate, clientCases = [], setCli
     court_name: "",
     plaintiff_petitioner: "",
     defendant_respondent: "",
+    home_address: "",
+    work_address: "",
     notes: "",
     status: "active"
   });
@@ -83,7 +85,7 @@ export default function ClientCases({ client, onUpdate, clientCases = [], setCli
         ...newCase
       };
       
-      const createdCase = await appwrite.createClientCase(caseData);
+      const createdCase = await appwrite.createCase(caseData);
       console.log("Case created:", createdCase);
       
       if (setClientCases) {
@@ -96,6 +98,8 @@ export default function ClientCases({ client, onUpdate, clientCases = [], setCli
         court_name: "",
         plaintiff_petitioner: "",
         defendant_respondent: "",
+        home_address: "",
+        work_address: "",
         notes: "",
         status: "active"
       });
@@ -272,6 +276,24 @@ export default function ClientCases({ client, onUpdate, clientCases = [], setCli
                       value={newCase.defendant_respondent}
                       onChange={(e) => setNewCase(prev => ({ ...prev, defendant_respondent: e.target.value }))}
                       placeholder="Enter defendant/respondent"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="home_address">Home Address</Label>
+                    <Input
+                      id="home_address"
+                      value={newCase.home_address}
+                      onChange={(e) => setNewCase(prev => ({ ...prev, home_address: e.target.value }))}
+                      placeholder="Enter home address"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="work_address">Work Address</Label>
+                    <Input
+                      id="work_address"
+                      value={newCase.work_address}
+                      onChange={(e) => setNewCase(prev => ({ ...prev, work_address: e.target.value }))}
+                      placeholder="Enter work address"
                     />
                   </div>
                   <div>
