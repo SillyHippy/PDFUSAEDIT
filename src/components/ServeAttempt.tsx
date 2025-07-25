@@ -324,8 +324,12 @@ const ServeAttempt: React.FC<ServeAttemptProps> = ({
     const parts: string[] = [];
     if (desc.age) parts.push(`Age: ${desc.age}`);
     if (desc.sex) parts.push(`Sex: ${desc.sex}`);
-    if (desc.race) parts.push(`Race: ${desc.race}`);
-    if (desc.height) parts.push(`Height: ${desc.height}`);
+    if (desc.ethnicity) parts.push(`Ethnicity: ${desc.ethnicity}`);
+    if (desc.height_feet && desc.height_inches) {
+      parts.push(`Height: ${desc.height_feet}'${desc.height_inches}"`);
+    } else if (desc.height_feet) {
+      parts.push(`Height: ${desc.height_feet}'`);
+    }
     if (desc.weight) parts.push(`Weight: ${desc.weight}`);
     if (desc.hair) parts.push(`Hair: ${desc.hair}`);
     if (desc.beard) parts.push(`Beard: ${desc.beard}`);

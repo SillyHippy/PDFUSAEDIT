@@ -33,8 +33,9 @@ import { User } from 'lucide-react';
 const physicalDescriptionSchema = z.object({
   age: z.string().optional(),
   sex: z.string().optional(),
-  race: z.string().optional(),
-  height: z.string().optional(),
+  ethnicity: z.string().optional(),
+  height_feet: z.string().optional(),
+  height_inches: z.string().optional(),
   weight: z.string().optional(),
   hair: z.string().optional(),
   beard: z.string().optional(),
@@ -61,8 +62,9 @@ const PhysicalDescriptionForm: React.FC<PhysicalDescriptionFormProps> = ({
     defaultValues: {
       age: initialData?.age || '',
       sex: initialData?.sex || '',
-      race: initialData?.race || '',
-      height: initialData?.height || '',
+      ethnicity: initialData?.ethnicity || '',
+      height_feet: initialData?.height_feet || '',
+      height_inches: initialData?.height_inches || '',
       weight: initialData?.weight || '',
       hair: initialData?.hair || '',
       beard: initialData?.beard || '',
@@ -85,8 +87,9 @@ const PhysicalDescriptionForm: React.FC<PhysicalDescriptionFormProps> = ({
     form.reset({
       age: '',
       sex: '',
-      race: '',
-      height: '',
+      ethnicity: '',
+      height_feet: '',
+      height_inches: '',
       weight: '',
       hair: '',
       beard: '',
@@ -148,15 +151,57 @@ const PhysicalDescriptionForm: React.FC<PhysicalDescriptionFormProps> = ({
               />
             </div>
 
+            <FormField
+              control={form.control}
+              name="ethnicity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm">Ethnicity</FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="African American">African American</SelectItem>
+                        <SelectItem value="Asian American">Asian American</SelectItem>
+                        <SelectItem value="Caucasian">Caucasian</SelectItem>
+                        <SelectItem value="Hispanic">Hispanic</SelectItem>
+                        <SelectItem value="Latino">Latino</SelectItem>
+                        <SelectItem value="Middle Eastern">Middle Eastern</SelectItem>
+                        <SelectItem value="Native American">Native American</SelectItem>
+                        <SelectItem value="Native Hawaiian">Native Hawaiian</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid grid-cols-2 gap-3">
               <FormField
                 control={form.control}
-                name="race"
+                name="height_feet"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm">Race</FormLabel>
+                    <FormLabel className="text-sm">Height (Feet)</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. White" {...field} />
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Feet" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="3">3'</SelectItem>
+                          <SelectItem value="4">4'</SelectItem>
+                          <SelectItem value="5">5'</SelectItem>
+                          <SelectItem value="6">6'</SelectItem>
+                          <SelectItem value="7">7'</SelectItem>
+                          <SelectItem value="8">8'</SelectItem>
+                          <SelectItem value="9">9'</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -165,12 +210,30 @@ const PhysicalDescriptionForm: React.FC<PhysicalDescriptionFormProps> = ({
 
               <FormField
                 control={form.control}
-                name="height"
+                name="height_inches"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm">Height</FormLabel>
+                    <FormLabel className="text-sm">Height (Inches)</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. 5'8&quot;" {...field} />
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Inches" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">0"</SelectItem>
+                          <SelectItem value="1">1"</SelectItem>
+                          <SelectItem value="2">2"</SelectItem>
+                          <SelectItem value="3">3"</SelectItem>
+                          <SelectItem value="4">4"</SelectItem>
+                          <SelectItem value="5">5"</SelectItem>
+                          <SelectItem value="6">6"</SelectItem>
+                          <SelectItem value="7">7"</SelectItem>
+                          <SelectItem value="8">8"</SelectItem>
+                          <SelectItem value="9">9"</SelectItem>
+                          <SelectItem value="10">10"</SelectItem>
+                          <SelectItem value="11">11"</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -221,11 +284,8 @@ const PhysicalDescriptionForm: React.FC<PhysicalDescriptionFormProps> = ({
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="None">None</SelectItem>
-                          <SelectItem value="Full">Full</SelectItem>
-                          <SelectItem value="Mustache">Mustache</SelectItem>
-                          <SelectItem value="Goatee">Goatee</SelectItem>
-                          <SelectItem value="Stubble">Stubble</SelectItem>
+                          <SelectItem value="Yes">Yes</SelectItem>
+                          <SelectItem value="No">No</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -246,10 +306,8 @@ const PhysicalDescriptionForm: React.FC<PhysicalDescriptionFormProps> = ({
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="None">None</SelectItem>
-                          <SelectItem value="Prescription">Prescription</SelectItem>
-                          <SelectItem value="Sunglasses">Sunglasses</SelectItem>
-                          <SelectItem value="Reading">Reading</SelectItem>
+                          <SelectItem value="Yes">Yes</SelectItem>
+                          <SelectItem value="No">No</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormControl>

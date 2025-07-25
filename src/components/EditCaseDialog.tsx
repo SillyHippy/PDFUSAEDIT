@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit } from "lucide-react";
 
 interface ClientCase {
@@ -134,6 +135,22 @@ export default function EditCaseDialog({ clientCase, onUpdate, isLoading }: Edit
                 onChange={(e) => setCaseData(prev => ({ ...prev, work_address: e.target.value }))}
                 placeholder="Enter work address"
               />
+            </div>
+            <div>
+              <Label htmlFor="status">Case Status</Label>
+              <Select 
+                value={caseData.status} 
+                onValueChange={(value) => setCaseData(prev => ({ ...prev, status: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="closed">Closed</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="notes">Notes</Label>
