@@ -1,6 +1,7 @@
 import { appwrite } from "@/lib/appwrite";
 import { ID } from "appwrite";
 import { extractBase64 } from "./imageUtils";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * Uploads an image from base64 to Appwrite storage and returns a public URL
@@ -44,7 +45,7 @@ export const uploadImageAndGetUrl = async (base64Image, filename = "serve_eviden
     console.log(`Created File object: ${file.name}, size: ${file.size} bytes`);
     
     // Generate a unique file ID
-    const fileId = ID.unique();
+    const fileId = uuidv4().replace(/-/g, '');
     
     // Upload to Appwrite storage
     const result = await appwrite.storage.createFile(

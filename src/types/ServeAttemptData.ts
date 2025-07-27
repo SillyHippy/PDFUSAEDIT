@@ -23,6 +23,8 @@ export interface ServeAttemptData {
   coordinates?: string | { latitude: number; longitude: number };
   imageData?: string;
   image_data?: string;
+  thumbnailUrl?: string; // Public URL to thumbnail in Appwrite Storage
+  thumbnailFileId?: string; // File ID in Appwrite Storage for deletion
   attemptNumber?: number;
   attempt_number?: number;
   personEntityBeingServed?: string;

@@ -139,7 +139,10 @@ const ServeHistory: React.FC<ServeHistoryProps> = ({ serves, clients, onDelete, 
             googleMapsLink,
             status: serve.status,
             timestamp: serve.timestamp,
-            formattedDate: formatDate(serve.timestamp)
+            formattedDate: formatDate(serve.timestamp),
+            thumbnailUrl: serve.thumbnailUrl,
+            imageData: serve.imageData ? "Base64 data present" : "No base64",
+            hasImage: !!(serve.thumbnailUrl || serve.imageData)
           });
 
           const caseDisplay = formatCaseInfo(serve.caseNumber || "Unknown", serve.caseName || "");
@@ -188,15 +191,20 @@ const ServeHistory: React.FC<ServeHistoryProps> = ({ serves, clients, onDelete, 
               
               <CardContent className="pb-2">
                 <div className="space-y-2">
-                  {serve.imageData && (
+                  {(serve.thumbnailUrl || serve.imageData) && (
                     <div className="rounded-md overflow-hidden mb-3 border h-36">
                       <img 
-                        src={serve.imageData} 
+                        src={serve.thumbnailUrl || serve.imageData} 
                         alt="Serve attempt" 
                         className="w-full h-full object-cover" 
                         onError={(e) => {
                           console.error("Image failed to load:", e);
-                          e.currentTarget.src = "https://placehold.co/400x300?text=No+Image";
+                          // Fallback to base64 if thumbnail URL fails
+                          if (serve.thumbnailUrl && serve.imageData && e.currentTarget.src !== serve.imageData) {
+                            e.currentTarget.src = serve.imageData;
+                          } else {
+                            e.currentTarget.src = "https://placehold.co/400x300?text=No+Image";
+                          }
                         }}
                       />
                     </div>

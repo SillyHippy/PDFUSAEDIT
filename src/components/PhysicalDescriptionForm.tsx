@@ -83,6 +83,11 @@ const PhysicalDescriptionForm: React.FC<PhysicalDescriptionFormProps> = ({
     setIsOpen(false);
   };
 
+  // Prevent dialog form from submitting parent form
+  const handleSaveClick = () => {
+    form.handleSubmit(handleSubmit)();
+  };
+
   const handleClear = () => {
     form.reset({
       age: '',
@@ -334,7 +339,7 @@ const PhysicalDescriptionForm: React.FC<PhysicalDescriptionFormProps> = ({
               >
                 Cancel
               </Button>
-              <Button type="submit" size="sm">
+              <Button type="button" size="sm" onClick={handleSaveClick}>
                 Save Description
               </Button>
             </DialogFooter>

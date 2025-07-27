@@ -50,6 +50,8 @@ export function normalizeServeData(serve: any): ServeAttemptData | null {
     address: serve.address || serve.service_address || serve.home_address,
     attemptNumber: serve.attemptNumber || serve.attempt_number || 1,
     imageData: serve.imageData || serve.image_data || null,
+    thumbnailUrl: serve.thumbnailUrl || serve.thumbnail_url || null,
+    thumbnailFileId: serve.thumbnailFileId || serve.thumbnail_file_id || null,
     personEntityBeingServed: serve.personEntityBeingServed || serve.person_entity_being_served || "",
     physicalDescription: serve.physicalDescription || serve.physical_description,
   };

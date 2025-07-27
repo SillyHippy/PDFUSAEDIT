@@ -1,6 +1,7 @@
 import { Client, Account, Databases, Storage, ID, Query, Teams, Functions } from 'appwrite';
 import { APPWRITE_CONFIG } from '@/config/backendConfig';
 import { createServeEmailBody } from "@/utils/email"; 
+import { v4 as uuidv4 } from "uuid";
 
 const client = new Client();
 
@@ -195,7 +196,7 @@ export const appwrite = {
 
   async createClient(client) {
     try {
-      const clientId = client.id || ID.unique();
+      const clientId = client.id || uuidv4().replace(/-/g, '');
       const now = new Date().toISOString();
       const response = await databases.createDocument(
         DATABASE_ID,
@@ -320,8 +321,10 @@ export const appwrite = {
         status: doc.status || "unknown",
         timestamp: doc.timestamp ? new Date(doc.timestamp) : new Date(),
         attemptNumber: doc.attempt_number || 1,
-        // Only include image data for recent records to save memory
-        imageData: offset === 0 ? (doc.image_data || null) : null,
+        // Use thumbnail URL for faster loading, fallback to base64 for legacy records
+        thumbnailUrl: doc.thumbnailUrl || doc.thumbnail_url || null,
+        thumbnailFileId: doc.thumbnailFileId || doc.thumbnail_file_id || null,
+        imageData: (doc.thumbnailUrl || doc.thumbnail_url) ? null : (offset === 0 ? (doc.image_data || null) : null),
         address: doc.address || "",
         serviceAddress: doc.service_address || "",
       }));
@@ -351,7 +354,9 @@ export const appwrite = {
         status: doc.status || "unknown",
         timestamp: doc.timestamp ? new Date(doc.timestamp) : new Date(),
         attemptNumber: doc.attempt_number || 1,
-        imageData: doc.image_data || null,
+        thumbnailUrl: doc.thumbnailUrl || doc.thumbnail_url || null,
+        thumbnailFileId: doc.thumbnailFileId || doc.thumbnail_file_id || null,
+        imageData: (doc.thumbnailUrl || doc.thumbnail_url) ? null : (doc.image_data || null),
         address: doc.address || "",
         serviceAddress: doc.service_address || "",
       })).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
@@ -407,7 +412,24 @@ export const appwrite = {
         }
       }
 
-      const documentId = ID.unique();
+      const documentId = uuidv4().replace(/-/g, '');
+
+      // Process thumbnail if image data is provided
+      let thumbnailUrl = "";
+      let thumbnailFileId = "";
+      
+      if (serveData.imageData) {
+        try {
+          const { processAndStoreThumbnail } = await import("@/utils/thumbnailStorage");
+          thumbnailUrl = await processAndStoreThumbnail(serveData.imageData, documentId);
+          // Extract file ID from URL (last part after the last slash)
+          const urlParts = thumbnailUrl.split('/');
+          thumbnailFileId = urlParts[urlParts.length - 1];
+          console.log("Thumbnail processed successfully:", thumbnailUrl);
+        } catch (thumbnailError) {
+          console.warn("Failed to process thumbnail, continuing without it:", thumbnailError);
+        }
+      }
 
       const payload = {
         client_id: serveData.clientId,
@@ -420,6 +442,8 @@ export const appwrite = {
         service_address: serveData.serviceAddress || serveData.address || "",
         coordinates: coordinates,
         image_data: serveData.imageData || "",
+        thumbnailUrl: thumbnailUrl,
+        thumbnailFileId: thumbnailFileId,
         timestamp: serveData.timestamp ? 
                    (serveData.timestamp instanceof Date ? 
                     serveData.timestamp.toISOString() : 
@@ -483,7 +507,7 @@ export const appwrite = {
         console.log("Saving serve attempt to local storage as fallback");
         const serveAttempts = JSON.parse(localStorage.getItem("serve-tracker-serves") || "[]");
         const newServe = {
-          id: ID.unique(),
+          id: uuidv4().replace(/-/g, ''),
           clientId: serveData.clientId,
           clientName: serveData.clientName || "Unknown Client",
           clientEmail: serveData.clientEmail,
@@ -730,7 +754,7 @@ export const appwrite = {
 
   async createCase(caseData) {
     try {
-      const caseId = ID.unique();
+      const caseId = uuidv4().replace(/-/g, '');
       const now = new Date().toISOString();
       const response = await databases.createDocument(
         DATABASE_ID,
@@ -820,14 +844,14 @@ export const appwrite = {
 
   async uploadClientDocument(clientId, file, caseNumber, description) {
     try {
-      const fileId = ID.unique();
+      const fileId = uuidv4().replace(/-/g, '');
       const fileUploadResponse = await storage.createFile(
         STORAGE_BUCKET_ID,
         fileId,
         file
       );
       
-      const docId = ID.unique();
+      const docId = uuidv4().replace(/-/g, '');
       const now = new Date().toISOString();
       const document = await databases.createDocument(
         DATABASE_ID,

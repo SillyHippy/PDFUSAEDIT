@@ -199,23 +199,47 @@ export const generateAffidavitPDF = async (data: AffidavitData): Promise<void> =
         }
       });
 
-      // Compile all notes including physical descriptions - use database field names
+      // Compile all notes and physical descriptions for each attempt
       const allNotes = sortedAttempts
-        .filter(attempt => {
-          const notes = attempt.notes || attempt.description;
-          return notes && notes.trim();
-        })
         .map((attempt, index) => {
           const attemptLabel = sortedAttempts.length > 1 ? `Attempt ${index + 1}: ` : '';
-          const notes = attempt.notes || attempt.description || '';
-          return `${attemptLabel}${notes}`;
+          let notes = attempt.notes || attempt.description || '';
+          // Append formatted physical description if present
+          if (attempt.physicalDescription) {
+            const desc = formatPhysicalDescription(attempt.physicalDescription);
+            if (desc) {
+              notes = notes ? `${notes}\nPhysical Description: ${desc}` : `Physical Description: ${desc}`;
+            }
+          }
+          return notes ? `${attemptLabel}${notes}` : '';
         })
+        .filter(Boolean)
         .join('\n\n');
 
       if (allNotes) {
         fillTextField('Description', allNotes);
         fillTextField('service_description', allNotes);
         fillTextField('Description::', allNotes);
+        fillTextField('Comments', allNotes); // Also fill Additional Comments field
+      }
+
+      // Helper to format physical description
+      function formatPhysicalDescription(desc) {
+        if (!desc) return '';
+        const parts = [];
+        if (desc.age) parts.push(`Age: ${desc.age}`);
+        if (desc.sex) parts.push(`Sex: ${desc.sex}`);
+        if (desc.ethnicity) parts.push(`Ethnicity: ${desc.ethnicity}`);
+        if (desc.height_feet && desc.height_inches) {
+          parts.push(`Height: ${desc.height_feet}'${desc.height_inches}"`);
+        } else if (desc.height_feet) {
+          parts.push(`Height: ${desc.height_feet}'`);
+        }
+        if (desc.weight) parts.push(`Weight: ${desc.weight}`);
+        if (desc.hair) parts.push(`Hair: ${desc.hair}`);
+        if (desc.beard) parts.push(`Beard: ${desc.beard}`);
+        if (desc.glasses) parts.push(`Glasses: ${desc.glasses}`);
+        return parts.join(', ');
       }
     }
     
@@ -235,7 +259,11 @@ export const generateAffidavitPDF = async (data: AffidavitData): Promise<void> =
       throw new Error('Failed to save the PDF document. There might be an issue with the data provided.');
     }
     
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    // Convert pdfBytes to a new ArrayBuffer to avoid SharedArrayBuffer issues
+    const ab = new ArrayBuffer(pdfBytes.byteLength);
+    const view = new Uint8Array(ab);
+    view.set(new Uint8Array(pdfBytes));
+    const blob = new Blob([ab], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
     
     const link = document.createElement('a');

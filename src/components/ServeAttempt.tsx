@@ -137,15 +137,20 @@ const ServeAttempt: React.FC<ServeAttemptProps> = ({
         for (const client of clients) {
           const clientCases = await appwrite.getClientCases(client.id);
           activeCases.push(
-            ...clientCases.filter((caseItem) => caseItem.status !== "Closed").map((caseItem) => ({
-              caseNumber: caseItem.case_number,
-              caseName: caseItem.case_name,
-              homeAddress: caseItem.home_address,
-              workAddress: caseItem.work_address,
-              clientId: client.id,
-              clientName: client.name,
-              personEntityBeingServed: caseItem.person_entity_being_served || caseItem.case_name,
-            }))
+            ...clientCases
+              .filter((caseItem) => {
+                const status = (caseItem.status || '').toLowerCase();
+                return status !== "closed" && status !== "inactive" && status !== "archived";
+              })
+              .map((caseItem) => ({
+                caseNumber: caseItem.case_number,
+                caseName: caseItem.case_name,
+                homeAddress: caseItem.home_address,
+                workAddress: caseItem.work_address,
+                clientId: client.id,
+                clientName: client.name,
+                personEntityBeingServed: caseItem.person_entity_being_served || caseItem.case_name,
+              }))
           );
         }
 
@@ -172,7 +177,10 @@ const ServeAttempt: React.FC<ServeAttemptProps> = ({
         try {
           const clientCases = await appwrite.getClientCases(selectedClient.id);
           const activeCases = clientCases
-            .filter((caseItem) => caseItem.status !== "Closed")
+            .filter((caseItem) => {
+              const status = (caseItem.status || '').toLowerCase();
+              return status !== "closed" && status !== "inactive" && status !== "archived";
+            })
             .map((caseItem) => ({
               caseNumber: caseItem.case_number,
               caseName: caseItem.case_name,
