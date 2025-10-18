@@ -270,9 +270,12 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
+    console.log("handleFileSelect triggered, files:", files?.length, "location:", location ? "available" : "missing");
+    
     if (files && files.length > 0) {
       if (!location) {
         console.log("GPS required: Please wait for GPS location before capturing.");
+        alert("Please wait for GPS location to load before taking a photo.");
         return;
       }
 
@@ -286,14 +289,24 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
       const reader = new FileReader();
       reader.onload = () => {
         const imageData = reader.result as string;
+        console.log("Image read successfully, size:", imageData.length, "calling onCapture...");
         // Directly call onCapture to pass image to parent component
         // This ensures the image data is saved to ServeAttempt state
         if (location) {
           console.log("Device camera image captured, calling onCapture with GPS data");
           onCapture(imageData, location);
+        } else {
+          console.error("Location lost between file select and read!");
+          alert("GPS location was lost. Please try again.");
         }
       };
+      reader.onerror = (error) => {
+        console.error("Error reading file:", error);
+        alert("Failed to read image file. Please try again.");
+      };
       reader.readAsDataURL(file);
+    } else {
+      console.log("No files selected or file selection cancelled");
     }
   };
 

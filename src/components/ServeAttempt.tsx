@@ -313,9 +313,15 @@ const ServeAttempt: React.FC<ServeAttemptProps> = ({
   };
 
   const handleCameraCapture = async (imageData: string, coords: GeolocationCoordinates) => {
+    console.log("ServeAttempt: handleCameraCapture called!");
+    console.log("  - Image data length:", imageData?.length);
+    console.log("  - GPS coords:", coords ? `${coords.latitude}, ${coords.longitude}` : "missing");
+    
     setCapturedImage(imageData);
     setLocation(coords);
     setStep("confirm");
+    
+    console.log("ServeAttempt: State updated, moving to confirm step");
   };
 
   const handleAddressClick = (address: string, e: React.MouseEvent) => {
