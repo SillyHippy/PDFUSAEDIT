@@ -2,6 +2,7 @@ import { Client, Account, Databases, Storage, ID, Query, Teams, Functions } from
 import { APPWRITE_CONFIG } from '@/config/backendConfig';
 import { createServeEmailBody } from "@/utils/email"; 
 import { v4 as uuidv4 } from "uuid";
+import { processAndStoreThumbnail } from "@/utils/thumbnailStorage";
 
 const client = new Client();
 
@@ -420,7 +421,6 @@ export const appwrite = {
       
       if (serveData.imageData) {
         try {
-          const { processAndStoreThumbnail } = await import("@/utils/thumbnailStorage");
           thumbnailUrl = await processAndStoreThumbnail(serveData.imageData, documentId);
           // Extract file ID from URL (last part after the last slash)
           const urlParts = thumbnailUrl.split('/');
@@ -442,8 +442,6 @@ export const appwrite = {
         service_address: serveData.serviceAddress || serveData.address || "",
         coordinates: coordinates,
         image_data: serveData.imageData || "",
-        thumbnailUrl: thumbnailUrl,
-        thumbnailFileId: thumbnailFileId,
         timestamp: serveData.timestamp ? 
                    (serveData.timestamp instanceof Date ? 
                     serveData.timestamp.toISOString() : 
@@ -451,6 +449,14 @@ export const appwrite = {
                    new Date().toISOString(),
         attempt_number: serveData.attemptNumber || 1,
       };
+
+      // Only include thumbnail fields if they were successfully generated
+      if (thumbnailUrl) {
+        payload.thumbnailUrl = thumbnailUrl;
+      }
+      if (thumbnailFileId) {
+        payload.thumbnailFileId = thumbnailFileId;
+      }
 
       const response = await databases.createDocument(
         DATABASE_ID,
