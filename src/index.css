@@ -1,0 +1,328 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 222 25% 50%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 25% 40%;
+
+    --accent: 210 30% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 222 25% 50%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 60%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 222 47% 16%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 222 47% 16%;
+    --muted-foreground: 215 25% 70%;
+
+    --accent: 222 47% 16%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 222 47% 16%;
+    --input: 222 47% 16%;
+    --ring: 210 40% 70%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Custom font loading */
+  @font-face {
+    font-family: 'SF Pro Display';
+    src: url('https://applesocial.s3.amazonaws.com/assets/styles/fonts/sanfrancisco/sanfranciscodisplay-regular-webfont.woff');
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: 'SF Pro Display';
+    src: url('https://applesocial.s3.amazonaws.com/assets/styles/fonts/sanfrancisco/sanfranciscodisplay-medium-webfont.woff');
+    font-weight: 500;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: 'SF Pro Display';
+    src: url('https://applesocial.s3.amazonaws.com/assets/styles/fonts/sanfrancisco/sanfranciscodisplay-bold-webfont.woff');
+    font-weight: 700;
+    font-style: normal;
+  }
+
+  /* Make scrollbar more subtle */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Critical Mobile Fixes */
+  /* Force viewport to use visual viewport height */
+  :root {
+    --app-height: 100%;
+  }
+  
+  /* Fix scrolling when keyboard appears */
+  input, textarea, select {
+    font-size: 16px !important; /* Prevents iOS zoom on focus */
+    margin-bottom: 16px;
+  }
+  
+  /* Dialog and Drawer specific fixes */
+  [role="dialog"] {
+    transform: translate3d(0,0,0);
+    -webkit-transform: translate3d(0,0,0);
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  [role="dialog"] form {
+    padding-bottom: 80px; /* Extra padding for keyboard */
+  }
+  
+  /* Fix for Vaul drawer */
+  .vaul-drawer-content {
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Fix for modal content */
+  [data-radix-popper-content-wrapper] {
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch !important;
+    max-height: 80vh !important;
+  }
+  
+  /* Enable scrolling for all dialogs */
+  [role="dialog"] [data-state="open"] {
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  
+  /* Apply hardware acceleration to fix iOS rendering */
+  .fixed,
+  .absolute,
+  [role="dialog"],
+  .vaul-drawer-content,
+  [data-radix-popper-content-wrapper] {
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+  }
+  
+  /* Fix viewport height issues on iOS */
+  @supports (-webkit-touch-callout: none) {
+    .h-screen, .min-h-screen {
+      height: -webkit-fill-available;
+      height: 100vh; /* Fallback */
+      height: 100dvh; /* Modern dynamic viewport units */
+    }
+    
+    body {
+      min-height: -webkit-fill-available;
+    }
+    
+    /* Adjust main content for iOS */
+    .page-container {
+      padding-bottom: 120px !important; /* Extra padding at the bottom for iOS */
+    }
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/60 backdrop-blur-lg rounded-xl border border-white/20 shadow-glass;
+  }
+
+  .neo-card {
+    @apply bg-secondary/50 rounded-xl border border-secondary/80 shadow-neo;
+  }
+
+  .page-transition {
+    @apply animate-fade-in motion-reduce:animate-none;
+  }
+
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12;
+  }
+
+  .section-container {
+    @apply animate-slide-in motion-reduce:animate-none;
+  }
+  
+  /* New mobile-specific component styles */
+  .mobile-safe-area {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .mobile-card {
+    @apply rounded-xl shadow-sm border;
+  }
+
+  .mobile-bottom-sheet {
+    @apply fixed bottom-0 left-0 right-0 bg-background rounded-t-xl shadow-lg border-t z-40 pb-8;
+    max-height: 85vh;
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+  }
+
+  .mobile-bottom-sheet-closed {
+    transform: translateY(100%);
+  }
+
+  .mobile-bottom-sheet-handle {
+    @apply w-12 h-1.5 bg-muted-foreground/20 rounded-full mx-auto my-2;
+  }
+
+  .mobile-input {
+    @apply h-12 rounded-xl border-input bg-background text-base;
+  }
+
+  .mobile-button {
+    @apply h-12 rounded-xl text-base font-medium;
+  }
+
+  .mobile-nav-button {
+    @apply flex items-center gap-2 px-4 py-3 rounded-md;
+  }
+
+  .mobile-fab {
+    @apply fixed right-4 bottom-6 rounded-full w-14 h-14 flex items-center justify-center shadow-lg bg-primary text-primary-foreground;
+  }
+  
+  .mobile-header {
+    @apply sticky top-0 z-30 flex justify-between items-center px-4 py-2 bg-background/80 backdrop-blur-sm border-b;
+  }
+  
+  .mobile-bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-background border-t flex justify-around items-center p-2 z-30;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+  
+  .mobile-list-item {
+    @apply flex items-center justify-between py-3 px-4 border-b last:border-b-0;
+  }
+  
+  /* Additional Animations */
+  .mobile-slide-up {
+    animation: slide-up 0.3s ease-out forwards;
+  }
+  
+  .mobile-slide-down {
+    animation: slide-down 0.3s ease-out forwards;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+/* Page Transition Animations */
+.page-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 400ms, transform 400ms;
+}
+
+.page-exit {
+  opacity: 1;
+}
+
+.page-exit-active {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 300ms, transform 300ms;
+}
