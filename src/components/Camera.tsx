@@ -80,33 +80,6 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
     };
   }, [selectedCamera, useNativeCamera]);
 
-  // Monitor file input for changes (backup for Android)
-  useEffect(() => {
-    const checkFileInput = () => {
-      if (fileInputRef.current?.files && fileInputRef.current.files.length > 0) {
-        console.log("File input detected with files (via polling):", fileInputRef.current.files.length);
-        // Manually trigger the change handler
-        const event = new Event('change', { bubbles: true });
-        fileInputRef.current.dispatchEvent(event);
-      }
-    };
-
-    let intervalId: NodeJS.Timeout | null = null;
-    
-    if (useNativeCamera && !capturedImage) {
-      // Poll every 500ms when native camera is active
-      intervalId = setInterval(checkFileInput, 500);
-      console.log("Started polling file input for Android compatibility");
-    }
-
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-        console.log("Stopped polling file input");
-      }
-    };
-  }, [useNativeCamera, capturedImage]);
-
   const startCamera = async () => {
     if (stream) {
       stopCamera();
