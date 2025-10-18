@@ -325,7 +325,7 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
                 <input
                   type="file"
                   accept="image/*"
-                  capture={isAndroidDevice() ? true : "environment"}
+                  capture={isMobile || isAndroid ? "environment" : undefined}
                   ref={fileInputRef}
                   onChange={handleFileSelect}
                   className="hidden"
