@@ -293,16 +293,10 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
       const reader = new FileReader();
       reader.onload = () => {
         const imageData = reader.result as string;
-        console.log("Image read successfully, size:", imageData.length, "calling onCapture...");
-        // Directly call onCapture to pass image to parent component
-        // This ensures the image data is saved to ServeAttempt state
-        if (location) {
-          console.log("Device camera image captured, calling onCapture with GPS data");
-          onCapture(imageData, location);
-        } else {
-          console.error("Location lost between file select and read!");
-          alert("GPS location was lost. Please try again.");
-        }
+        console.log("Image read successfully, size:", imageData.length);
+        // Set the captured image to show preview, just like in-app camera
+        setCapturedImage(imageData);
+        console.log("Image set to preview state - user can confirm or retake");
       };
       reader.onerror = (error) => {
         console.error("Error reading file:", error);
