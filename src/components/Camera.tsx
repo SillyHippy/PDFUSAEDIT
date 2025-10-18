@@ -22,7 +22,8 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
   const [cameraStatus, setCameraStatus] = useState<"loading" | "active" | "error" | "inactive">("inactive");
   const [cameraDevices, setCameraDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
-  const [useNativeCamera, setUseNativeCamera] = useState(false);
+  // On Android, default to native camera for better compatibility
+  const [useNativeCamera, setUseNativeCamera] = useState(isAndroidDevice());
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -321,7 +322,7 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
                 <input
                   type="file"
                   accept="image/*"
-                  capture="environment"
+                  capture={isAndroidDevice() ? true : "environment"}
                   ref={fileInputRef}
                   onChange={handleFileSelect}
                   className="hidden"
