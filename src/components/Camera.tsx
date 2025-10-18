@@ -22,12 +22,8 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
   const [cameraStatus, setCameraStatus] = useState<"loading" | "active" | "error" | "inactive">("inactive");
   const [cameraDevices, setCameraDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
-  // Check if device is mobile more reliably
+  const [useNativeCamera, setUseNativeCamera] = useState(false);
   const isMobile = useIsMobile();
-  const isAndroid = /Android/i.test(navigator.userAgent);
-  // On Android or mobile, default to native camera for better compatibility
-  const [useNativeCamera, setUseNativeCamera] = useState(isMobile || isAndroid);
-  const isMobileDevice = useIsMobile();
 
   useEffect(() => {
     const fetchCameraDevices = async () => {
@@ -262,27 +258,15 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
 
   const useDeviceCamera = () => {
     if (fileInputRef.current && location) {
-      console.log("useDeviceCamera: Triggering native camera, location available");
-      // Reset the input value to ensure onChange fires even if same file selected
-      fileInputRef.current.value = "";
       fileInputRef.current.click();
     } else if (!location) {
       console.log("GPS required: Please wait for GPS location before capturing.");
-      alert("Please wait for GPS location before taking photo");
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    console.log("handleFileSelect triggered, files:", files?.length, "location:", location ? "available" : "missing");
-    
-    if (files && files.length > 0) {
-      if (!location) {
-        console.log("GPS required: Please wait for GPS location before capturing.");
-        alert("Please wait for GPS location to load before taking a photo.");
-        return;
-      }
-
+    if (files && files.length > 0 && location) {
       const file = files[0];
       
       if (!file.type.startsWith("image/")) {
@@ -293,18 +277,9 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
       const reader = new FileReader();
       reader.onload = () => {
         const imageData = reader.result as string;
-        console.log("Image read successfully, size:", imageData.length);
-        // Set the captured image to show preview, just like in-app camera
         setCapturedImage(imageData);
-        console.log("Image set to preview state - user can confirm or retake");
-      };
-      reader.onerror = (error) => {
-        console.error("Error reading file:", error);
-        alert("Failed to read image file. Please try again.");
       };
       reader.readAsDataURL(file);
-    } else {
-      console.log("No files selected or file selection cancelled");
     }
   };
 
@@ -336,13 +311,14 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
                 <input
                   type="file"
                   accept="image/*"
+                  capture="environment"
                   ref={fileInputRef}
                   onChange={handleFileSelect}
                   className="hidden"
                 />
                 <div className="text-center p-8">
                   <Image className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">Tap the button below to take or upload a photo</p>
+                  <p className="text-muted-foreground">Tap the button below to open your camera</p>
                 </div>
               </div>
             ) : (
@@ -495,7 +471,7 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
               className="flex-1"
             >
               <Camera className="w-4 h-4 mr-2" />
-              Take or Upload Photo
+              Take Photo
             </Button>
           </>
         ) : (
