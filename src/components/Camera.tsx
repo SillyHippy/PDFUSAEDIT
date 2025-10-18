@@ -22,9 +22,12 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
   const [cameraStatus, setCameraStatus] = useState<"loading" | "active" | "error" | "inactive">("inactive");
   const [cameraDevices, setCameraDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
-  // On Android, default to native camera for better compatibility
-  const [useNativeCamera, setUseNativeCamera] = useState(isAndroidDevice());
+  // Check if device is mobile more reliably
   const isMobile = useIsMobile();
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  // On Android or mobile, default to native camera for better compatibility
+  const [useNativeCamera, setUseNativeCamera] = useState(isMobile || isAndroid);
+  const isMobileDevice = useIsMobile();
 
   useEffect(() => {
     const fetchCameraDevices = async () => {
