@@ -382,7 +382,8 @@ const ServeAttempt: React.FC<ServeAttemptProps> = ({
         personEntityBeingServed: selectedCase.personEntityBeingServed || selectedCase.caseName || "",
         imageData: imageWithGPS,
         coordinates: `${location.latitude},${location.longitude}`,
-        address: selectedCase.homeAddress || selectedCase.workAddress || selectedClient.address || "No address available",
+        // Use serviceAddress if provided, otherwise fall back to case addresses
+        address: data.serviceAddress || selectedCase.homeAddress || selectedCase.workAddress || selectedClient.address || "No address available",
         serviceAddress: data.serviceAddress,
         notes: finalNotes,
         timestamp: new Date(),
@@ -741,6 +742,14 @@ const ServeAttempt: React.FC<ServeAttemptProps> = ({
                           <Input 
                             placeholder="Enter the actual service address (optional)"
                             {...field}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              // Uncheck both checkboxes when user manually types
+                              if (e.target.value !== selectedCase?.homeAddress && e.target.value !== selectedCase?.workAddress) {
+                                setUseHomeAddress(false);
+                                setUseWorkAddress(false);
+                              }
+                            }}
                           />
                           <div className="flex flex-col gap-2">
                             {selectedCase?.homeAddress && (
