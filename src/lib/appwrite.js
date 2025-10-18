@@ -416,8 +416,8 @@ export const appwrite = {
       const documentId = uuidv4().replace(/-/g, '');
 
       // Process thumbnail if image data is provided
-      let thumbnailUrl = "";
-      let thumbnailFileId = "";
+      let thumbnailUrl = null;
+      let thumbnailFileId = null;
       
       if (serveData.imageData) {
         try {
@@ -428,6 +428,8 @@ export const appwrite = {
           console.log("Thumbnail processed successfully:", thumbnailUrl);
         } catch (thumbnailError) {
           console.warn("Failed to process thumbnail, continuing without it:", thumbnailError);
+          thumbnailUrl = null;
+          thumbnailFileId = null;
         }
       }
 
@@ -453,10 +455,18 @@ export const appwrite = {
       // Only include thumbnail fields if they were successfully generated
       if (thumbnailUrl) {
         payload.thumbnailUrl = thumbnailUrl;
+        console.log("Including thumbnailUrl in payload:", thumbnailUrl);
+      } else {
+        console.log("Skipping thumbnailUrl - not generated");
       }
       if (thumbnailFileId) {
         payload.thumbnailFileId = thumbnailFileId;
+        console.log("Including thumbnailFileId in payload:", thumbnailFileId);
+      } else {
+        console.log("Skipping thumbnailFileId - not generated");
       }
+
+      console.log("Final payload being sent to Appwrite:", payload);
 
       const response = await databases.createDocument(
         DATABASE_ID,
