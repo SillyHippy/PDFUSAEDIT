@@ -311,14 +311,13 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
                 <input
                   type="file"
                   accept="image/*"
-                  capture="environment"
                   ref={fileInputRef}
                   onChange={handleFileSelect}
                   className="hidden"
                 />
                 <div className="text-center p-8">
                   <Image className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">Tap the button below to open your camera</p>
+                  <p className="text-muted-foreground">Tap the button below to take or upload a photo</p>
                 </div>
               </div>
             ) : (
@@ -471,7 +470,7 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
               className="flex-1"
             >
               <Camera className="w-4 h-4 mr-2" />
-              Take Photo
+              Take or Upload Photo
             </Button>
           </>
         ) : (

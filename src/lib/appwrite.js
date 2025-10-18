@@ -2,6 +2,7 @@ import { Client, Account, Databases, Storage, ID, Query, Teams, Functions } from
 import { APPWRITE_CONFIG } from '@/config/backendConfig';
 import { createServeEmailBody } from "@/utils/email"; 
 import { v4 as uuidv4 } from "uuid";
+import { generateThumbnail } from "@/utils/thumbnailGenerator";
 
 const client = new Client();
 
@@ -415,19 +416,48 @@ export const appwrite = {
       const documentId = uuidv4().replace(/-/g, '');
 
       // Process thumbnail if image data is provided
-      let thumbnailUrl = "";
-      let thumbnailFileId = "";
+      let thumbnailUrl = null;
+      let thumbnailFileId = null;
       
       if (serveData.imageData) {
         try {
-          const { processAndStoreThumbnail } = await import("@/utils/thumbnailStorage");
-          thumbnailUrl = await processAndStoreThumbnail(serveData.imageData, documentId);
-          // Extract file ID from URL (last part after the last slash)
-          const urlParts = thumbnailUrl.split('/');
-          thumbnailFileId = urlParts[urlParts.length - 1];
-          console.log("Thumbnail processed successfully:", thumbnailUrl);
+          console.log("Starting thumbnail generation process...");
+          
+          // Generate thumbnail blob
+          const thumbnailBlob = await generateThumbnail(serveData.imageData, {
+            maxWidth: 400,
+            maxHeight: 300,
+            quality: 0.8,
+            format: 'jpeg'
+          });
+          
+          console.log(`Generated thumbnail blob (${thumbnailBlob.size} bytes)`);
+          
+          // Create file from blob
+          thumbnailFileId = uuidv4().replace(/-/g, '');
+          const filename = `serve_${documentId}_thumb.jpg`;
+          const file = new File([thumbnailBlob], filename, { type: 'image/jpeg' });
+          
+          console.log(`Created thumbnail file: ${file.name}, size: ${file.size} bytes`);
+          
+          // Upload to Appwrite storage
+          const THUMBNAIL_BUCKET_ID = "68865532001e22527554";
+          const result = await storage.createFile(
+            THUMBNAIL_BUCKET_ID,
+            thumbnailFileId,
+            file
+          );
+          
+          console.log("Thumbnail uploaded successfully:", result.$id);
+          
+          // Get the public URL
+          thumbnailUrl = `https://nyc.cloud.appwrite.io/v1/storage/buckets/${THUMBNAIL_BUCKET_ID}/files/${thumbnailFileId}/view?project=67ff9afd003750551953`;
+          
+          console.log("Generated thumbnail URL:", thumbnailUrl);
         } catch (thumbnailError) {
           console.warn("Failed to process thumbnail, continuing without it:", thumbnailError);
+          thumbnailUrl = null;
+          thumbnailFileId = null;
         }
       }
 
@@ -442,8 +472,6 @@ export const appwrite = {
         service_address: serveData.serviceAddress || serveData.address || "",
         coordinates: coordinates,
         image_data: serveData.imageData || "",
-        thumbnailUrl: thumbnailUrl,
-        thumbnailFileId: thumbnailFileId,
         timestamp: serveData.timestamp ? 
                    (serveData.timestamp instanceof Date ? 
                     serveData.timestamp.toISOString() : 
@@ -451,6 +479,15 @@ export const appwrite = {
                    new Date().toISOString(),
         attempt_number: serveData.attemptNumber || 1,
       };
+      
+      // Only include thumbnail fields if they were successfully generated
+      if (thumbnailUrl && thumbnailFileId) {
+        payload.thumbnailUrl = thumbnailUrl;
+        payload.thumbnailFileId = thumbnailFileId;
+        console.log("Including thumbnail fields in payload");
+      } else {
+        console.log("Skipping thumbnail fields - not generated");
+      }
 
       const response = await databases.createDocument(
         DATABASE_ID,
