@@ -80,6 +80,33 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
     };
   }, [selectedCamera, useNativeCamera]);
 
+  // Monitor file input for changes (backup for Android)
+  useEffect(() => {
+    const checkFileInput = () => {
+      if (fileInputRef.current?.files && fileInputRef.current.files.length > 0) {
+        console.log("File input detected with files (via polling):", fileInputRef.current.files.length);
+        // Manually trigger the change handler
+        const event = new Event('change', { bubbles: true });
+        fileInputRef.current.dispatchEvent(event);
+      }
+    };
+
+    let intervalId: NodeJS.Timeout | null = null;
+    
+    if (useNativeCamera && !capturedImage) {
+      // Poll every 500ms when native camera is active
+      intervalId = setInterval(checkFileInput, 500);
+      console.log("Started polling file input for Android compatibility");
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+        console.log("Stopped polling file input");
+      }
+    };
+  }, [useNativeCamera, capturedImage]);
+
   const startCamera = async () => {
     if (stream) {
       stopCamera();
@@ -262,9 +289,13 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
 
   const useDeviceCamera = () => {
     if (fileInputRef.current && location) {
+      console.log("useDeviceCamera: Triggering native camera, location available");
+      // Reset the input value to ensure onChange fires even if same file selected
+      fileInputRef.current.value = "";
       fileInputRef.current.click();
     } else if (!location) {
       console.log("GPS required: Please wait for GPS location before capturing.");
+      alert("Please wait for GPS location before taking photo");
     }
   };
 
@@ -338,14 +369,13 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
                 <input
                   type="file"
                   accept="image/*"
-                  capture={isMobile || isAndroid ? "environment" : undefined}
                   ref={fileInputRef}
                   onChange={handleFileSelect}
                   className="hidden"
                 />
                 <div className="text-center p-8">
                   <Image className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">Tap the button below to open your camera</p>
+                  <p className="text-muted-foreground">Tap the button below to take or upload a photo</p>
                 </div>
               </div>
             ) : (
@@ -498,7 +528,7 @@ const CameraComponent: React.FC<CameraComponentProps> = ({ onCapture }) => {
               className="flex-1"
             >
               <Camera className="w-4 h-4 mr-2" />
-              Take Photo
+              Take or Upload Photo
             </Button>
           </>
         ) : (
