@@ -244,9 +244,12 @@ export default function ClientDocuments({ clientId, clientName, caseNumber, onUp
   const uploadButton = (
     <ResponsiveDialog
       open={uploadDialogOpen}
-      onOpenChange={setUploadDialogOpen}
+      onOpenChange={(open) => {
+        console.log('Upload dialog state changing to:', open, 'for case:', caseNumber);
+        setUploadDialogOpen(open);
+      }}
       trigger={
-        <Button>
+        <Button onClick={() => console.log('Upload button clicked for case:', caseNumber)}>
           <Upload className="mr-2 h-4 w-4" />
           Upload Document
         </Button>
@@ -333,108 +336,201 @@ export default function ClientDocuments({ clientId, clientName, caseNumber, onUp
   );
 
   return (
-    <Card className="neo-card">
-      {!hideHeader && (
-        <CardHeader>
-          <CardTitle className="flex justify-between items-center">
-            <span>{cardTitle}</span>
-            {uploadButton}
-          </CardTitle>
-          <CardDescription>
-            View, upload and manage documents{caseNumber ? ` for this case` : ` for this client`}
-          </CardDescription>
-        </CardHeader>
-      )}
-      
-      <CardContent>
-        {isLoading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading documents...</p>
-          </div>
-        ) : documents.length === 0 ? (
-          <div className="text-center py-8 sm:py-12 border rounded-md border-dashed">
-            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">No documents yet</h3>
-            <p className="text-muted-foreground mb-4">
-              Upload your first document to get started
-            </p>
-            <Button onClick={() => setUploadDialogOpen(true)}>
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Document
-            </Button>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>File</TableHead>
-                  {!caseNumber && <TableHead>Case</TableHead>}
-                  <TableHead className="hidden md:table-cell">Description</TableHead>
-                  <TableHead className="hidden md:table-cell">Size</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {documents.map((doc) => (
-                  <TableRow key={doc.id}>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <File className="h-4 w-4 mr-2 flex-shrink-0" />
-                        <span className="truncate max-w-[150px]" title={doc.fileName}>
-                          {doc.fileName}
-                        </span>
-                      </div>
-                    </TableCell>
-                    {!caseNumber && (
-                      <TableCell>
-                        {doc.caseNumber ? (
+    <>
+      {hideHeader ? (
+        // When hideHeader is true, render without Card wrapper for better nesting
+        <div className="space-y-4">
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading documents...</p>
+            </div>
+          ) : documents.length === 0 ? (
+            <div className="text-center py-8 border rounded-md border-dashed">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">No documents yet</h3>
+              <p className="text-muted-foreground mb-4">
+                Upload your first document{caseNumber ? ' for this case' : ''} to get started
+              </p>
+              {uploadButton}
+            </div>
+          ) : (
+            <>
+              <div className="flex justify-end mb-4">
+                {uploadButton}
+              </div>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>File</TableHead>
+                      {!caseNumber && <TableHead>Case</TableHead>}
+                      <TableHead className="hidden md:table-cell">Description</TableHead>
+                      <TableHead className="hidden md:table-cell">Size</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {documents.map((doc) => (
+                      <TableRow key={doc.id}>
+                        <TableCell>
                           <div className="flex items-center">
-                            <Briefcase className="h-4 w-4 mr-2 text-muted-foreground" />
-                            <span title={getCaseDisplayName(doc.caseNumber, doc.caseName) || ""}>
-                              {getCaseDisplayName(doc.caseNumber, doc.caseName) || doc.caseNumber}
+                            <File className="h-4 w-4 mr-2 flex-shrink-0" />
+                            <span className="truncate max-w-[150px]" title={doc.fileName}>
+                              {doc.fileName}
                             </span>
                           </div>
-                        ) : (
-                          <span className="text-muted-foreground italic">None</span>
+                        </TableCell>
+                        {!caseNumber && (
+                          <TableCell>
+                            {doc.caseNumber ? (
+                              <div className="flex items-center">
+                                <Briefcase className="h-4 w-4 mr-2 text-muted-foreground" />
+                                <span title={getCaseDisplayName(doc.caseNumber, doc.caseName) || ""}>
+                                  {getCaseDisplayName(doc.caseNumber, doc.caseName) || doc.caseNumber}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground italic">None</span>
+                            )}
+                          </TableCell>
                         )}
-                      </TableCell>
-                    )}
-                    <TableCell className="hidden md:table-cell">
-                      <span className="truncate max-w-[200px] block" title={doc.description || ""}>
-                        {doc.description || <span className="text-muted-foreground italic">No description</span>}
-                      </span>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">{formatFileSize(doc.fileSize)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleDownload(doc)}
-                          title="Download"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="text-destructive hover:bg-destructive/10"
-                          onClick={() => handleDelete(doc)}
-                          title="Delete"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                        <TableCell className="hidden md:table-cell">
+                          <span className="truncate max-w-[200px] block" title={doc.description || ""}>
+                            {doc.description || <span className="text-muted-foreground italic">No description</span>}
+                          </span>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">{formatFileSize(doc.fileSize)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleDownload(doc)}
+                              title="Download"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="text-destructive hover:bg-destructive/10"
+                              onClick={() => handleDelete(doc)}
+                              title="Delete"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
+        </div>
+      ) : (
+        // When hideHeader is false, render with Card wrapper as before
+        <Card className="neo-card">
+          <CardHeader>
+            <CardTitle className="flex justify-between items-center">
+              <span>{cardTitle}</span>
+              {uploadButton}
+            </CardTitle>
+            <CardDescription>
+              View, upload and manage documents{caseNumber ? ` for this case` : ` for this client`}
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent>
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading documents...</p>
+              </div>
+            ) : documents.length === 0 ? (
+              <div className="text-center py-8 sm:py-12 border rounded-md border-dashed">
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">No documents yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Upload your first document{caseNumber ? ' for this case' : ''} to get started
+                </p>
+                {uploadButton}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>File</TableHead>
+                      {!caseNumber && <TableHead>Case</TableHead>}
+                      <TableHead className="hidden md:table-cell">Description</TableHead>
+                      <TableHead className="hidden md:table-cell">Size</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {documents.map((doc) => (
+                      <TableRow key={doc.id}>
+                        <TableCell>
+                          <div className="flex items-center">
+                            <File className="h-4 w-4 mr-2 flex-shrink-0" />
+                            <span className="truncate max-w-[150px]" title={doc.fileName}>
+                              {doc.fileName}
+                            </span>
+                          </div>
+                        </TableCell>
+                        {!caseNumber && (
+                          <TableCell>
+                            {doc.caseNumber ? (
+                              <div className="flex items-center">
+                                <Briefcase className="h-4 w-4 mr-2 text-muted-foreground" />
+                                <span title={getCaseDisplayName(doc.caseNumber, doc.caseName) || ""}>
+                                  {getCaseDisplayName(doc.caseNumber, doc.caseName) || doc.caseNumber}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground italic">None</span>
+                            )}
+                          </TableCell>
+                        )}
+                        <TableCell className="hidden md:table-cell">
+                          <span className="truncate max-w-[200px] block" title={doc.description || ""}>
+                            {doc.description || <span className="text-muted-foreground italic">No description</span>}
+                          </span>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">{formatFileSize(doc.fileSize)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleDownload(doc)}
+                              title="Download"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="text-destructive hover:bg-destructive/10"
+                              onClick={() => handleDelete(doc)}
+                              title="Delete"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </>
   );
 }

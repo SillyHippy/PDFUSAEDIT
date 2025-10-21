@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, FileText, Edit, Trash2, Upload } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Plus, FileText, Edit, Trash2, Upload, FolderOpen } from "lucide-react";
 import { appwrite } from "@/lib/appwrite";
 import { useToast } from "@/hooks/use-toast";
 import { ClientData } from "./ClientForm";
@@ -215,7 +216,7 @@ export default function ClientCases({ client, onUpdate, clientCases = [], setCli
         <TabsList>
           <TabsTrigger value="cases">Cases</TabsTrigger>
           <TabsTrigger value="serves">Service History</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="documents">General Documents</TabsTrigger>
         </TabsList>
 
         <TabsContent value="cases" className="space-y-4">
@@ -353,21 +354,45 @@ export default function ClientCases({ client, onUpdate, clientCases = [], setCli
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2 text-sm">
-                      <p><strong>Case Number:</strong> {clientCase.case_number}</p>
-                      {clientCase.court_name && (
-                        <p><strong>Court:</strong> {clientCase.court_name}</p>
-                      )}
-                      {clientCase.plaintiff_petitioner && (
-                        <p><strong>Plaintiff/Petitioner:</strong> {clientCase.plaintiff_petitioner}</p>
-                      )}
-                      {clientCase.defendant_respondent && (
-                        <p><strong>Defendant/Respondent:</strong> {clientCase.defendant_respondent}</p>
-                      )}
-                      {clientCase.notes && (
-                        <p><strong>Notes:</strong> {clientCase.notes}</p>
-                      )}
-                      <p><strong>Service Attempts:</strong> {caseServes.length}</p>
+                    <div className="space-y-4">
+                      <div className="space-y-2 text-sm">
+                        <p><strong>Case Number:</strong> {clientCase.case_number}</p>
+                        {clientCase.court_name && (
+                          <p><strong>Court:</strong> {clientCase.court_name}</p>
+                        )}
+                        {clientCase.plaintiff_petitioner && (
+                          <p><strong>Plaintiff/Petitioner:</strong> {clientCase.plaintiff_petitioner}</p>
+                        )}
+                        {clientCase.defendant_respondent && (
+                          <p><strong>Defendant/Respondent:</strong> {clientCase.defendant_respondent}</p>
+                        )}
+                        {clientCase.notes && (
+                          <p><strong>Notes:</strong> {clientCase.notes}</p>
+                        )}
+                        <p><strong>Service Attempts:</strong> {caseServes.length}</p>
+                      </div>
+                      
+                      {/* Case-specific documents section */}
+                      <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="case-documents" className="border rounded-lg px-4">
+                          <AccordionTrigger className="hover:no-underline">
+                            <div className="flex items-center gap-2">
+                              <FolderOpen className="h-4 w-4" />
+                              <span>Case Documents</span>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="pt-2">
+                              <ClientDocuments 
+                                clientId={client.id}
+                                clientName={client.name}
+                                caseNumber={clientCase.case_number}
+                                hideHeader={true}
+                              />
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
                     </div>
                   </CardContent>
                 </Card>
@@ -395,6 +420,13 @@ export default function ClientCases({ client, onUpdate, clientCases = [], setCli
         </TabsContent>
 
         <TabsContent value="documents" className="space-y-4">
+          <div className="mb-4">
+            <h3 className="text-lg font-medium mb-1">General Client Documents</h3>
+            <p className="text-sm text-muted-foreground">
+              Documents that belong to {client.name} but are not specific to any case. 
+              For case-specific documents, expand the "Case Documents" section within each case above.
+            </p>
+          </div>
           <ClientDocuments clientId={client.id} clientName={client.name} />
         </TabsContent>
       </Tabs>
