@@ -86,7 +86,7 @@ export const loadDataFromAppwrite = async (): Promise<{
       additionalEmails: client.additional_emails || [],
       phone: client.phone,
       address: client.address,
-      notes: client.notes
+      notes: client.notes || ""
     }));
     
     // Get serve attempts from Appwrite
