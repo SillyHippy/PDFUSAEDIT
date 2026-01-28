@@ -76,7 +76,8 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 5000,
+      staleTime: 1000 * 60 * 5, // 5 minutes - reduces unnecessary refetches
+      gcTime: 1000 * 60 * 30,   // 30 minutes - keeps data in cache longer
     },
     mutations: {
       onError: (error) => {

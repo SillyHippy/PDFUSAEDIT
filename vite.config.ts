@@ -29,10 +29,18 @@ export default defineConfig(({ mode }) => ({
     // Ensure all assets are copied to dist
     copyPublicDir: true,
     assetsInlineLimit: 0, // Don't inline assets, keep them as separate files
+    target: 'esnext',
     rollupOptions: {
       // Ensure PDF files are treated as external assets
       external: [],
       output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover'],
+          charts: ['recharts'],
+          pdf: ['pdf-lib', 'jspdf'],
+          forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
+        },
         assetFileNames: (assetInfo) => {
           // Keep PDF files in their original structure
           if (assetInfo.name && assetInfo.name.endsWith('.pdf')) {
