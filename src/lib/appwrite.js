@@ -190,7 +190,10 @@ export const appwrite = {
       const response = await databases.listDocuments(
         DATABASE_ID, 
         CLIENTS_COLLECTION_ID,
-        [Query.limit(500)] // Increase limit from default 25
+        [
+          Query.limit(500),
+          Query.orderDesc('$updatedAt') // Most recently updated/added first
+        ]
       );
       return response.documents;
     } catch (error) {
