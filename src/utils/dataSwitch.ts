@@ -74,12 +74,15 @@ export const loadDataFromAppwrite = async (): Promise<{
   clients: ClientData[];
   serves: ServeAttemptData[];
 }> => {
+  console.log("Loading data from Appwrite instead of local storage");
+  
+  let clients: ClientData[] = [];
+  let serves: ServeAttemptData[] = [];
+  
+  // Get clients from Appwrite - don't let serve failures affect this
   try {
-    console.log("Loading data from Appwrite instead of local storage");
-    
-    // Get clients from Appwrite
     const appwriteClients = await appwrite.getClients();
-    const clients = appwriteClients.map(client => ({
+    clients = appwriteClients.map(client => ({
       id: client.$id,
       name: client.name,
       email: client.email,
@@ -88,10 +91,20 @@ export const loadDataFromAppwrite = async (): Promise<{
       address: client.address,
       notes: client.notes || ""
     }));
-    
-    // Get serve attempts from Appwrite
+  } catch (error) {
+    console.error("Error loading clients from Appwrite:", error);
+    // Keep existing clients from localStorage if fetch fails
+    const savedClients = localStorage.getItem("serve-tracker-clients");
+    if (savedClients) {
+      clients = JSON.parse(savedClients);
+      console.log("Using cached clients from localStorage due to fetch error");
+    }
+  }
+  
+  // Get serve attempts from Appwrite - separate try/catch so client loading isn't affected
+  try {
     const appwriteServes = await appwrite.getServeAttempts();
-    const serves = appwriteServes.map(serve => ({
+    serves = appwriteServes.map(serve => ({
       id: serve.$id,
       clientId: serve.clientId,
       date: serve.date,
@@ -102,14 +115,14 @@ export const loadDataFromAppwrite = async (): Promise<{
       imageData: serve.imageData,
       coordinates: serve.coordinates
     }));
-    
-    console.log(`Loaded ${clients.length} clients and ${serves.length} serve attempts from Appwrite`);
-    
-    return { clients, serves };
   } catch (error) {
-    console.error("Error loading data from Appwrite:", error);
-    return { clients: [], serves: [] };
+    console.error("Error loading serve attempts from Appwrite:", error);
+    // Serve attempts failure should not wipe client data
   }
+  
+  console.log(`Loaded ${clients.length} clients and ${serves.length} serve attempts from Appwrite`);
+  
+  return { clients, serves };
 };
 
 export const saveClientToAppwrite = async (client: ClientData): Promise<ClientData | null> => {
