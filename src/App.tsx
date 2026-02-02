@@ -1,17 +1,26 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import NewServe from './pages/NewServe';
-import Clients from './pages/Clients';
-import History from './pages/History';
-import Settings from './pages/Settings';
-import Index from './pages/Index';
 import LoginPage from './pages/LoginPage';
-import MigrationPage from './pages/Migration';
-import DataExport from './pages/DataExport';
+import { Loader2 } from 'lucide-react';
+
+// Lazy load heavy page components for better initial load performance
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const NewServe = lazy(() => import('./pages/NewServe'));
+const Clients = lazy(() => import('./pages/Clients'));
+const History = lazy(() => import('./pages/History'));
+const Settings = lazy(() => import('./pages/Settings'));
+const MigrationPage = lazy(() => import('./pages/Migration'));
+const DataExport = lazy(() => import('./pages/DataExport'));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-[50vh]">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
 import { ServeAttemptData } from './types/ServeAttemptData';
 import { ClientData } from './components/ClientForm';
 import { appwrite } from './lib/appwrite';
@@ -485,35 +494,61 @@ const AnimatedRoutes = () => {
             <Layout />
           </ProtectedRoute>
         }>
-          <Route path="/" element={<Dashboard clients={clients} serves={[]} />} />
+          <Route path="/" element={
+            <Suspense fallback={<PageLoader />}>
+              <Dashboard clients={clients} serves={[]} />
+            </Suspense>
+          } />
           <Route path="/dashboard" element={
-            <Dashboard clients={clients} serves={[]} />
+            <Suspense fallback={<PageLoader />}>
+              <Dashboard clients={clients} serves={[]} />
+            </Suspense>
           } />
           <Route path="/new-serve" element={
-            <NewServe clients={clients} addServe={createServe} />
+            <Suspense fallback={<PageLoader />}>
+              <NewServe clients={clients} addServe={createServe} />
+            </Suspense>
           } />
           <Route path="/new-serve/:clientId" element={
-            <NewServe clients={clients} addServe={createServe} />
+            <Suspense fallback={<PageLoader />}>
+              <NewServe clients={clients} addServe={createServe} />
+            </Suspense>
           } />
           <Route path="/clients" element={
-            <Clients 
-              clients={clients} 
-              addClient={createClient}
-              updateClient={updateClient}
-              deleteClient={deleteClient}
-            />
+            <Suspense fallback={<PageLoader />}>
+              <Clients 
+                clients={clients} 
+                addClient={createClient}
+                updateClient={updateClient}
+                deleteClient={deleteClient}
+              />
+            </Suspense>
           } />
           <Route path="/history" element={
-            <History 
-              serves={[]} 
-              clients={clients}
-              deleteServe={deleteServe}
-              updateServe={updateServe}
-            />
+            <Suspense fallback={<PageLoader />}>
+              <History 
+                serves={[]} 
+                clients={clients}
+                deleteServe={deleteServe}
+                updateServe={updateServe}
+              />
+            </Suspense>
           } />
-          <Route path="/migration" element={<MigrationPage />} />
-          <Route path="/export" element={<DataExport />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/migration" element={
+            <Suspense fallback={<PageLoader />}>
+              <MigrationPage />
+            </Suspense>
+          } />
+          <Route path="/export" element={
+            <Suspense fallback={<PageLoader />}>
+              <DataExport />
+            </Suspense>
+          } />
+          <Route path="/settings" element={
+            <Suspense fallback={<PageLoader />}>
+              <Settings />
+            </Suspense>
+          } />
         </Route>
       </Routes>
     </>
