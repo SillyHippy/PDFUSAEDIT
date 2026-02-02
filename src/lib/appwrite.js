@@ -187,7 +187,11 @@ export const appwrite = {
 
   async getClients() {
     try {
-      const response = await databases.listDocuments(DATABASE_ID, CLIENTS_COLLECTION_ID);
+      const response = await databases.listDocuments(
+        DATABASE_ID, 
+        CLIENTS_COLLECTION_ID,
+        [Query.limit(500)] // Increase limit from default 25
+      );
       return response.documents;
     } catch (error) {
       console.error('Error fetching clients:', error);
@@ -364,6 +368,20 @@ export const appwrite = {
     } catch (error) {
       console.error(`Error fetching serve attempts for client ${clientId}:`, error);
       return [];
+    }
+  },
+
+  async getTotalServeAttemptsCount() {
+    try {
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        SERVE_ATTEMPTS_COLLECTION_ID,
+        [Query.limit(1)]
+      );
+      return response.total;
+    } catch (error) {
+      console.error('Error getting total serve attempts count:', error);
+      return 0;
     }
   },
 

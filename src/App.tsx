@@ -29,6 +29,7 @@ import { initializeDebugTools } from '@/utils/debugUtils';
 import { normalizeServeDataArray } from "@/utils/dataNormalization";
 import { createServeEmailBody, createDeleteNotificationEmail } from "@/utils/email";
 import { shouldSkipSync, logMemoryStats } from "@/utils/memoryUtils";
+import { migrateServeAttempts } from "@/utils/migrateServeAttempts";
 
 // Initialize debug tools for development
 if (process.env.NODE_ENV !== 'production') {
@@ -40,8 +41,12 @@ declare global {
   interface Window {
     debugAppwrite: () => void;
     testDeleteClient: (clientId: string) => void;
+    runMigration: () => Promise<{ migrated: number; failed: number }>;
   }
 }
+
+// Make migration available in console
+window.runMigration = migrateServeAttempts;
 
 // Debug helper for older browser console support
 window.debugAppwrite = function() {
