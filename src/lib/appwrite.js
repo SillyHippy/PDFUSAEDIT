@@ -3,6 +3,7 @@ import { APPWRITE_CONFIG } from '@/config/backendConfig';
 import { createServeEmailBody } from "@/utils/email"; 
 import { v4 as uuidv4 } from "uuid";
 import { generateThumbnail } from "@/utils/thumbnailGenerator";
+import { extractBase64 } from "@/utils/imageUtils";
 
 const client = new Client();
 
@@ -329,10 +330,14 @@ export const appwrite = {
         status: doc.status || "unknown",
         timestamp: doc.timestamp ? new Date(doc.timestamp) : new Date(),
         attemptNumber: doc.attempt_number || 1,
-        // Use thumbnail URL for faster loading, fallback to base64 for legacy records
+        // Use thumbnail URL for faster loading
         thumbnailUrl: doc.thumbnailUrl || doc.thumbnail_url || null,
         thumbnailFileId: doc.thumbnailFileId || doc.thumbnail_file_id || null,
-        imageData: (doc.thumbnailUrl || doc.thumbnail_url) ? null : (offset === 0 ? (doc.image_data || null) : null),
+        // Use image_url (storage URL) for full image - no more base64 in database
+        imageUrl: doc.image_url || null,
+        imageFileId: doc.image_file_id || null,
+        // Keep image_data for backwards compatibility with legacy records
+        image_data: doc.image_data || null,
         address: doc.address || "",
         serviceAddress: doc.service_address || "",
       }));
@@ -364,7 +369,11 @@ export const appwrite = {
         attemptNumber: doc.attempt_number || 1,
         thumbnailUrl: doc.thumbnailUrl || doc.thumbnail_url || null,
         thumbnailFileId: doc.thumbnailFileId || doc.thumbnail_file_id || null,
-        imageData: (doc.thumbnailUrl || doc.thumbnail_url) ? null : (doc.image_data || null),
+        // Use image_url (storage URL) for full image - no more base64 in database
+        imageUrl: doc.image_url || null,
+        imageFileId: doc.image_file_id || null,
+        // Keep image_data for backwards compatibility with legacy records
+        image_data: doc.image_data || null,
         address: doc.address || "",
         serviceAddress: doc.service_address || "",
       })).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
@@ -436,11 +445,72 @@ export const appwrite = {
 
       const documentId = uuidv4().replace(/-/g, '');
 
-      // Process thumbnail if image data is provided
+      // Process full image and thumbnail if image data is provided
       let thumbnailUrl = null;
       let thumbnailFileId = null;
+      let imageUrl = null;
+      let imageFileId = null;
       
       if (serveData.imageData) {
+        // Upload full image to storage bucket
+        try {
+          console.log("Starting full image upload process...");
+          
+          // Extract the pure base64 data without the prefix
+          const pureBase64 = extractBase64(serveData.imageData);
+          
+          if (!pureBase64) {
+            throw new Error("Failed to extract base64 data from image");
+          }
+          
+          console.log(`Extracted base64 data (${pureBase64.length} chars)`);
+          
+          // Convert base64 to a Blob
+          const byteCharacters = atob(pureBase64);
+          const byteArrays = [];
+          
+          for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+            const slice = byteCharacters.slice(offset, offset + 512);
+            
+            const byteNumbers = new Array(slice.length);
+            for (let i = 0; i < slice.length; i++) {
+              byteNumbers[i] = slice.charCodeAt(i);
+            }
+            
+            const byteArray = new Uint8Array(byteNumbers);
+            byteArrays.push(byteArray);
+          }
+          
+          const fullImageBlob = new Blob(byteArrays, { type: "image/jpeg" });
+          
+          // Create file from blob for full image
+          imageFileId = uuidv4().replace(/-/g, '');
+          const fullImageFilename = `serve_${documentId}_full.jpg`;
+          const fullImageFile = new File([fullImageBlob], fullImageFilename, { type: 'image/jpeg' });
+          
+          console.log(`Created full image file: ${fullImageFile.name}, size: ${fullImageFile.size} bytes`);
+          
+          // Upload full image to Appwrite storage
+          const IMAGES_BUCKET_ID = STORAGE_BUCKET_ID;
+          const fullImageResult = await storage.createFile(
+            IMAGES_BUCKET_ID,
+            imageFileId,
+            fullImageFile
+          );
+          
+          console.log("Full image uploaded successfully:", fullImageResult.$id);
+          
+          // Get the public URL for full image
+          imageUrl = `https://nyc.cloud.appwrite.io/v1/storage/buckets/${IMAGES_BUCKET_ID}/files/${imageFileId}/view?project=67ff9afd003750551953`;
+          
+          console.log("Generated full image URL:", imageUrl);
+        } catch (imageError) {
+          console.error("Failed to upload full image:", imageError);
+          imageUrl = null;
+          imageFileId = null;
+        }
+        
+        // Generate and upload thumbnail
         try {
           console.log("Starting thumbnail generation process...");
           
@@ -492,7 +562,9 @@ export const appwrite = {
         address: address,
         service_address: serveData.serviceAddress || serveData.address || "",
         coordinates: coordinates,
-        image_data: serveData.imageData || "",
+        image_data: imageUrl || "", // Store URL instead of base64
+        image_url: imageUrl || "", // New field for full image URL
+        image_file_id: imageFileId || "", // New field for full image file ID
         timestamp: serveData.timestamp ? 
                    (serveData.timestamp instanceof Date ? 
                     serveData.timestamp.toISOString() : 
@@ -509,6 +581,15 @@ export const appwrite = {
       } else {
         console.log("Skipping thumbnail fields - not generated");
       }
+      
+      // Log fields being saved to confirm no base64 data
+      console.log("Payload image fields:", {
+        image_data_length: payload.image_data?.length || 0,
+        image_url: payload.image_url,
+        image_file_id: payload.image_file_id,
+        thumbnailUrl: payload.thumbnailUrl,
+        thumbnailFileId: payload.thumbnailFileId
+      });
 
       const response = await databases.createDocument(
         DATABASE_ID,
@@ -539,7 +620,7 @@ export const appwrite = {
           to: serveData.clientEmail || "info@justlegalsolutions.org",
           subject: `New Serve Attempt ${statusText} - ${response.case_name}`,
           html: emailBody,
-          imageData: response.image_data, 
+          imageUrl: response.image_url || response.image_data, // Use URL instead of base64
           coordinates: response.coordinates,
           notes: response.notes,
           status: response.status
@@ -576,7 +657,7 @@ export const appwrite = {
           status: serveData.status || "unknown",
           timestamp: new Date(),
           attemptNumber: serveData.attemptNumber || 1,
-          imageData: serveData.imageData || null,
+          imageUrl: null, // Don't store base64 in local storage fallback either
           address: serveData.address || ""
         };
         serveAttempts.push(newServe);
@@ -657,7 +738,7 @@ export const appwrite = {
               to: clientEmail,
               subject: `Serve Attempt Updated - ${response.case_name}`,
               html: emailBody,
-              imageData: response.image_data, 
+              imageUrl: response.image_url || response.image_data, // Use URL instead of base64
               coordinates: response.coordinates,
               notes: response.notes,
               status: response.status
@@ -770,8 +851,13 @@ export const appwrite = {
         status: doc.status || "unknown",
         timestamp: doc.timestamp ? new Date(doc.timestamp) : new Date(),
         attemptNumber: doc.attempt_number || 1,
-        // Only include image data for most recent 20 records
-        imageData: response.documents.indexOf(doc) < 20 ? (doc.image_data || null) : null,
+        // Use image_url for storage URL (no more base64 overhead)
+        imageUrl: doc.image_url || null,
+        imageFileId: doc.image_file_id || null,
+        thumbnailUrl: doc.thumbnailUrl || doc.thumbnail_url || null,
+        thumbnailFileId: doc.thumbnailFileId || doc.thumbnail_file_id || null,
+        // Keep image_data for backwards compatibility with legacy records
+        image_data: doc.image_data || null,
         address: doc.address || "",
         serviceAddress: doc.service_address || "",
       }));
@@ -780,9 +866,9 @@ export const appwrite = {
       const dataString = JSON.stringify(frontendServes);
       const sizeInMB = new Blob([dataString]).size / (1024 * 1024);
       
-      if (sizeInMB > 5) { // If data is over 5MB, reduce image data
-        console.warn(`Data size is ${sizeInMB.toFixed(2)}MB, removing image data to prevent memory issues`);
-        frontendServes.forEach(serve => serve.imageData = null);
+      if (sizeInMB > 5) { // If data is over 5MB, remove legacy image_data to prevent memory issues
+        console.warn(`Data size is ${sizeInMB.toFixed(2)}MB, removing legacy image_data to prevent memory issues`);
+        frontendServes.forEach(serve => serve.image_data = null);
       }
 
       localStorage.setItem("serve-tracker-serves", JSON.stringify(frontendServes));

@@ -27,7 +27,9 @@ export function normalizeServeData(serve: any): ServeAttemptData | null {
     status: serve.status || "unknown",
     timestamp: serve.timestamp ? new Date(serve.timestamp) : new Date(),
     attempt_number: serve.attempt_number || serve.attemptNumber || 1,
-    image_data: serve.image_data || serve.imageData || null,
+    image_data: serve.image_data || serve.imageData || null, // Deprecated: use image_url
+    image_url: serve.image_url || serve.imageUrl || null, // URL to full image in storage
+    image_file_id: serve.image_file_id || serve.imageFileId || null,
     coordinates: serve.coordinates || null,
     description: serve.description || "",
     created_at: serve.created_at || serve.timestamp || new Date().toISOString(),
@@ -49,7 +51,9 @@ export function normalizeServeData(serve: any): ServeAttemptData | null {
     serviceAddress: serve.serviceAddress || serve.service_address || serve.address,
     address: serve.address || serve.service_address || serve.home_address,
     attemptNumber: serve.attemptNumber || serve.attempt_number || 1,
-    imageData: serve.imageData || serve.image_data || null,
+    imageData: serve.imageData || serve.image_data || null, // Deprecated: use imageUrl
+    imageUrl: serve.imageUrl || serve.image_url || null, // URL to full image in storage
+    imageFileId: serve.imageFileId || serve.image_file_id || null,
     thumbnailUrl: serve.thumbnailUrl || serve.thumbnail_url || null,
     thumbnailFileId: serve.thumbnailFileId || serve.thumbnail_file_id || null,
     personEntityBeingServed: serve.personEntityBeingServed || serve.person_entity_being_served || "",

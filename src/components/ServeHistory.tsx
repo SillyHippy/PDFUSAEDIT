@@ -141,8 +141,8 @@ const ServeHistory: React.FC<ServeHistoryProps> = ({ serves, clients, onDelete, 
             timestamp: serve.timestamp,
             formattedDate: formatDate(serve.timestamp),
             thumbnailUrl: serve.thumbnailUrl,
-            imageData: serve.imageData ? "Base64 data present" : "No base64",
-            hasImage: !!(serve.thumbnailUrl || serve.imageData)
+            image_url: serve.image_url || serve.imageUrl,
+            hasImage: !!(serve.thumbnailUrl || serve.image_url || serve.imageUrl || serve.image_data)
           });
 
           const caseDisplay = formatCaseInfo(serve.caseNumber || "Unknown", serve.caseName || "");
@@ -191,17 +191,18 @@ const ServeHistory: React.FC<ServeHistoryProps> = ({ serves, clients, onDelete, 
               
               <CardContent className="pb-2">
                 <div className="space-y-2">
-                  {(serve.thumbnailUrl || serve.imageData) && (
+                  {(serve.thumbnailUrl || serve.image_url || serve.imageUrl || serve.image_data) && (
                     <div className="rounded-md overflow-hidden mb-3 border h-36">
                       <img 
-                        src={serve.thumbnailUrl || serve.imageData} 
+                        src={serve.thumbnailUrl || serve.image_url || serve.imageUrl || serve.image_data} 
                         alt="Serve attempt" 
                         className="w-full h-full object-cover" 
                         onError={(e) => {
                           console.error("Image failed to load:", e);
-                          // Fallback to base64 if thumbnail URL fails
-                          if (serve.thumbnailUrl && serve.imageData && e.currentTarget.src !== serve.imageData) {
-                            e.currentTarget.src = serve.imageData;
+                          // Fallback chain: thumbnailUrl -> image_url -> placeholder
+                          const fallbackUrl = serve.image_url || serve.imageUrl || serve.image_data;
+                          if (serve.thumbnailUrl && fallbackUrl && e.currentTarget.src !== fallbackUrl) {
+                            e.currentTarget.src = fallbackUrl;
                           } else {
                             e.currentTarget.src = "https://placehold.co/400x300?text=No+Image";
                           }

@@ -21,8 +21,12 @@ export interface ServeAttemptData {
   address?: string; // generic geocoded address field
   timestamp?: string | Date;
   coordinates?: string | { latitude: number; longitude: number };
-  imageData?: string;
-  image_data?: string;
+  imageData?: string; // Deprecated: use image_url instead
+  image_data?: string; // Deprecated: use image_url instead
+  image_url?: string; // Public URL to full image in Appwrite Storage
+  imageUrl?: string; // alias for image_url
+  image_file_id?: string; // File ID for full image in Appwrite Storage
+  imageFileId?: string; // alias for image_file_id
   thumbnailUrl?: string; // Public URL to thumbnail in Appwrite Storage
   thumbnailFileId?: string; // File ID in Appwrite Storage for deletion
   attemptNumber?: number;
