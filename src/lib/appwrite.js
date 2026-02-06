@@ -562,9 +562,7 @@ export const appwrite = {
         address: address,
         service_address: serveData.serviceAddress || serveData.address || "",
         coordinates: coordinates,
-        image_data: imageUrl || "", // Store URL instead of base64
-        image_url: imageUrl || "", // New field for full image URL
-        image_file_id: imageFileId || "", // New field for full image file ID
+        image_url: imageUrl || "", // Full image URL in storage
         timestamp: serveData.timestamp ? 
                    (serveData.timestamp instanceof Date ? 
                     serveData.timestamp.toISOString() : 
@@ -584,9 +582,7 @@ export const appwrite = {
       
       // Log fields being saved to confirm no base64 data
       console.log("Payload image fields:", {
-        image_data_length: payload.image_data?.length || 0,
         image_url: payload.image_url,
-        image_file_id: payload.image_file_id,
         thumbnailUrl: payload.thumbnailUrl,
         thumbnailFileId: payload.thumbnailFileId
       });
@@ -620,13 +616,13 @@ export const appwrite = {
           to: serveData.clientEmail || "info@justlegalsolutions.org",
           subject: `New Serve Attempt ${statusText} - ${response.case_name}`,
           html: emailBody,
-          imageUrl: response.image_url || response.image_data, // Use URL instead of base64
+          imageUrl: imageUrl, // Use the URL we just uploaded
           coordinates: response.coordinates,
           notes: response.notes,
           status: response.status
         };
     
-        console.log("Sending email with full data payload...");
+        console.log("Sending email with imageUrl:", imageUrl);
         const emailResult = await this.sendEmailViaFunction(emailData);
     
         if (emailResult.success) {

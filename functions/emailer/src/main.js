@@ -19,7 +19,7 @@ export default async ({ req, res, log, error }) => {
     log(JSON.stringify(req.bodyJson));
     log(JSON.stringify(req.headers));
 
-    const { to, subject, html, text, serveId, imageData } = payload;
+    const { to, subject, html, text, serveId, imageData, imageUrl } = payload;
 
     if (!to || !subject || (!html && !text)) {
       return res.json({ success: false, message: "Missing required fields (to, subject, and either html or text)" });
@@ -45,9 +45,27 @@ export default async ({ req, res, log, error }) => {
       emailData.to.push('info@justlegalsolutions.org');
     }
 
-    // If serveId is provided, fetch the document to get image_data,
-    // otherwise, if imageData is provided, use it directly.
-    if (serveId) {
+    // Priority: imageUrl (new way) > serveId (fetch from db) > imageData (legacy base64)
+    if (imageUrl && imageUrl.startsWith('http')) {
+      log(`Downloading image from URL: ${imageUrl}`);
+      try {
+        const response = await fetch(imageUrl);
+        if (response.ok) {
+          const arrayBuffer = await response.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          emailData.attachments.push({
+            filename: 'serve_evidence.jpg',
+            content: buffer
+          });
+          log(`Image downloaded and attached (${buffer.length} bytes)`);
+        } else {
+          error(`Failed to download image: ${response.status} ${response.statusText}`);
+        }
+      } catch (downloadError) {
+        error('Error downloading image from URL:', downloadError.message);
+      }
+    } else if (serveId) {
+      // If serveId is provided, fetch the document to get image_url or image_data
       log(`Fetching serve attempt with ID: ${serveId}`);
       try {
         const serve = await databases.getDocument(
@@ -55,8 +73,28 @@ export default async ({ req, res, log, error }) => {
           process.env.APPWRITE_FUNCTION_SERVE_ATTEMPTS_COLLECTION_ID,
           serveId
         );
-        if (serve.image_data) {
-          log('Found image_data in serve attempt document');
+        
+        // Try image_url first (new way)
+        if (serve.image_url && serve.image_url.startsWith('http')) {
+          log(`Downloading image from serve document URL: ${serve.image_url}`);
+          try {
+            const response = await fetch(serve.image_url);
+            if (response.ok) {
+              const arrayBuffer = await response.arrayBuffer();
+              const buffer = Buffer.from(arrayBuffer);
+              emailData.attachments.push({
+                filename: 'serve_evidence.jpg',
+                content: buffer
+              });
+              log(`Image downloaded from serve document and attached (${buffer.length} bytes)`);
+            }
+          } catch (downloadError) {
+            error('Error downloading image from serve document URL:', downloadError.message);
+          }
+        }
+        // Fallback to image_data (legacy base64)
+        else if (serve.image_data) {
+          log('Found image_data in serve attempt document (legacy)');
           let base64Content = serve.image_data;
           if (serve.image_data.includes('base64,')) {
             base64Content = serve.image_data.split('base64,')[1];
@@ -67,16 +105,16 @@ export default async ({ req, res, log, error }) => {
             content: base64Content,
             encoding: 'base64'
           });
-          log('Image successfully attached from serve document');
+          log('Image successfully attached from serve document (base64)');
         } else {
-          log('No image_data found in serve attempt document');
+          log('No image_url or image_data found in serve attempt document');
         }
       } catch (fetchError) {
         error('Failed to fetch serve attempt document:', fetchError.message);
         return res.json({ success: false, message: 'Failed to fetch serve attempt document' }, 500);
       }
     } else if (imageData) {
-      log("Using imageData provided in payload");
+      log("Using imageData provided in payload (legacy base64)");
       let base64Content = imageData;
       if (imageData.includes("base64,")) {
         base64Content = imageData.split("base64,")[1];
@@ -89,7 +127,7 @@ export default async ({ req, res, log, error }) => {
       });
       log('Image successfully attached using provided imageData');
     } else {
-      log("No serveId or imageData provided; no image will be attached");
+      log("No imageUrl, serveId, or imageData provided; no image will be attached");
     }
 
     // Read SMTP vars

@@ -16,7 +16,7 @@ const nodemailer = require('nodemailer');
 module.exports = async function(req, res) {
   try {
     // Parse the incoming JSON payload
-    const { to, subject, html, imageData } = JSON.parse(req.payload || '{}');
+    const { to, subject, html, imageData, imageUrl } = JSON.parse(req.payload || '{}');
     if (!to || !subject || !html) {
       return res.json({ success: false, message: 'Missing required fields' }, 400);
     }
@@ -41,9 +41,31 @@ module.exports = async function(req, res) {
 
     console.log(`Final recipients list: ${recipients.join(', ')}`);
 
-    // Prepare attachments if Base64 image is provided
+    // Prepare attachments
     const attachments = [];
-    if (imageData) {
+    
+    // If imageUrl is provided, download the image and attach it
+    if (imageUrl && imageUrl.startsWith('http')) {
+      try {
+        console.log(`Downloading image from URL: ${imageUrl}`);
+        const response = await fetch(imageUrl);
+        if (response.ok) {
+          const arrayBuffer = await response.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          attachments.push({
+            filename: 'serve_evidence.jpg',
+            content: buffer
+          });
+          console.log(`Image downloaded and attached (${buffer.length} bytes)`);
+        } else {
+          console.error(`Failed to download image: ${response.status} ${response.statusText}`);
+        }
+      } catch (downloadError) {
+        console.error('Error downloading image from URL:', downloadError.message);
+      }
+    }
+    // Fallback to base64 imageData if provided (for legacy support)
+    else if (imageData) {
       let base64Content = imageData;
       if (imageData.includes('base64,')) {
         base64Content = imageData.split('base64,')[1];
@@ -54,7 +76,7 @@ module.exports = async function(req, res) {
         content: base64Content,
         encoding: 'base64'
       });
-      console.log('Image successfully attached to email');
+      console.log('Image successfully attached to email (base64)');
     }
 
     // Send email with all recipients
