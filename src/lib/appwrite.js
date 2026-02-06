@@ -144,6 +144,13 @@ export const appwrite = {
         recipients.push(businessEmail);
       }
 
+      console.log("Sending email with data:", {
+        to: recipients,
+        subject: emailData.subject,
+        hasHtml: !!emailData.html,
+        imageUrl: emailData.imageUrl || "NO IMAGE URL PROVIDED"
+      });
+
       const response = await functions.createExecution(
         "67ed8899003a8b119a18", 
         JSON.stringify({ ...emailData, to: recipients })
